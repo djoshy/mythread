@@ -1,5 +1,5 @@
 #include <stdio.h>
 void hmm(char *t)
 {
-	printf("123%s\n",t);
+	printf("12%s\n",t);
 }

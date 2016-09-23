@@ -6,6 +6,6 @@ all: run.c
 
 clean:
 	@rm -f run
-	@rm -f *.o *.a
+	@rm -f *.o 
 
 	
