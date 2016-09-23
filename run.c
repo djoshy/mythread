@@ -1,4 +1,4 @@
-#include "test.h"
+#include "libtest.h"
 int main ()
 {
   char *c="Hello?";

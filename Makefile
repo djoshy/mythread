@@ -8,4 +8,5 @@ clean:
 	@rm -f run
 	@rm -f *.o 
 
-	
+test:
+	@gcc -o test test.c
