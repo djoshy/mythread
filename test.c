@@ -12,7 +12,7 @@ int fn1()
 void fn2()
 {
  printf("this is from 2\n");
-  setcontext( &a);
+ // setcontext( &a);
  printf("finished 1\n");
 }
 void start()
@@ -29,6 +29,7 @@ int main(int argc, char *argv[])
 {
  start();
  getcontext(&Main);
+ /*
  getcontext(&T1);
  T1.uc_link=0;
  T1.uc_stack.ss_sp=malloc(MEM);
@@ -36,6 +37,7 @@ int main(int argc, char *argv[])
  T1.uc_stack.ss_flags=0;
  makecontext(&T1, (void*)&fn1, 0);
  swapcontext(&Main, &T1);
+ */
  getcontext(&T2);
  T2.uc_link=0;
  T2.uc_stack.ss_sp=malloc(MEM);
