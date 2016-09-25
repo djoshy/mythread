@@ -2,49 +2,67 @@
 #include<stdlib.h>
 #include<ucontext.h>
 #define MEM 64000
-ucontext_t T1, T2,Main;
-ucontext_t a;
-int fn1()
-{
- printf("this is from 1\n");
- setcontext(&Main);
-}
-void fn2()
-{
- printf("this is from 2\n");
- // setcontext( &a);
- printf("finished 1\n");
-}
-void start()
-{
- getcontext(&a);
- a.uc_link=0;
- a.uc_stack.ss_sp=malloc(MEM);
- a.uc_stack.ss_size=MEM;
- a.uc_stack.ss_flags=0;
- makecontext(&a, (void*)&fn1, 0);
+struct Node {
+	int data;
+	struct Node* next;
+};
+// Two glboal variables to store address of front and rear nodes. 
+struct Node* front = NULL;
+struct Node* rear = NULL;
+
+// To Enqueue an integer
+void Enqueue(int x) {
+	struct Node* temp = 
+		(struct Node*)malloc(sizeof(struct Node));
+	temp->data =x; 
+	temp->next = NULL;
+	if(front == NULL && rear == NULL){
+		front = rear = temp;
+		return;
+	}
+	rear->next = temp;
+	rear = temp;
 }
 
-int main(int argc, char *argv[])
-{
- start();
- getcontext(&Main);
- /*
- getcontext(&T1);
- T1.uc_link=0;
- T1.uc_stack.ss_sp=malloc(MEM);
- T1.uc_stack.ss_size=MEM;
- T1.uc_stack.ss_flags=0;
- makecontext(&T1, (void*)&fn1, 0);
- swapcontext(&Main, &T1);
- */
- getcontext(&T2);
- T2.uc_link=0;
- T2.uc_stack.ss_sp=malloc(MEM);
- T2.uc_stack.ss_size=MEM;
- T2.uc_stack.ss_flags=0;
- makecontext(&T2, (void*)&fn2, 0);
- swapcontext(&Main, &T2);
- printf("completed\n");
- exit(0);
+// To Dequeue an integer.
+void Dequeue() {
+	struct Node* temp = front;
+	if(front == NULL) {
+		printf("Queue is Empty\n");
+		return;
+	}
+	if(front == rear) {
+		front = rear = NULL;
+	}
+	else {
+		front = front->next;
+	}
+	free(temp);
+}
+
+int Front() {
+	if(front == NULL) {
+		printf("Queue is empty\n");
+		return;
+	}
+	return front->data;
+}
+
+void Print() {
+	struct Node* temp = front;
+	while(temp != NULL) {
+		printf("%d ",temp->data);
+		temp = temp->next;
+	}
+	printf("\n");
+}
+
+int main(){
+	/* Drive code to test the implementation. */
+	// Printing elements in Queue after each Enqueue or Dequeue 
+	Enqueue(2); Print(); 
+	Enqueue(4); Print();
+	Enqueue(6); Print();
+	Dequeue();  Print();
+	Enqueue(8); Print();
 }

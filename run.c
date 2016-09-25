@@ -1,12 +1,21 @@
 #include "libtest.h"
 #include<stdio.h>
 #include<stdlib.h>
-void t0(void *n)
+void t1(void * who)
 {
-	int i;
-	for(i=0;i<10;i++)
-		printf("%d ",i);
-	printf("\n");
+  
+  printf("Hello from child!\n");
+  MyThreadYield();
+  
+  MyThreadExit();
+}
+
+void t0(void * dummy)
+{
+  
+  MyThreadCreate(t1, (void *)1);
+  MyThreadCreate(t1, (void *)1);
+  MyThreadYield();
 }
 int main ()
 {
