@@ -4,4 +4,4 @@ v0.2 got MyThreadCreate(),MyThreadYield(),MyThreadExit()
 
 Goals:
 Need to add parent pointer, blocking list and child list to container.
-Need to update blocking list in container.
+Need to add block list update in MyThreadExit()
