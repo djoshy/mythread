@@ -102,7 +102,7 @@ void MyThreadYield(){
 		running=R_front->data;
 	Dequeue();
 	printf("Thread ID %d running \n",running.id);
-	setcontext(&running.context);
+	swapcontext(&(R_rear->data).context,&running.context);
 }
 void MyThreadExit(){
 	printf("Thread ID %d Exiting \n",running.id);
@@ -111,8 +111,8 @@ void MyThreadExit(){
 	running=R_front->data;
 	Dequeue();
 	printf("Thread ID %d running \n",running.id);
-	if(running.id==1)
-		setcontext(&orig);
+	//if(running.id==1)
+	//	setcontext(&orig);
 	setcontext(&running.context);
 	
 }
