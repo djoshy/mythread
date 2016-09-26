@@ -5,17 +5,18 @@ void t1(void * who)
 {
   
   printf("Hello from child!\n");
-  MyThreadYield();
+ // MyThreadYield();
   
   MyThreadExit();
 }
 
 void t0(void * dummy)
 {
+  MyThread t=MyThreadCreate(t1, (void *)1);
+  //MyThreadCreate(t1, (void *)1);
   
-  MyThreadCreate(t1, (void *)1);
-  MyThreadCreate(t1, (void *)1);
-  MyThreadYield();
+  MyThreadJoin(t);
+  //printf("huh");
 }
 int main ()
 {
