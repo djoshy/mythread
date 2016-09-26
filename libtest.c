@@ -21,12 +21,18 @@ struct Node {
 	struct _MyThread* data;
 	struct Node* next;
 };
+struct _MySemaphore{
+	int value;
+	int blocked[MAX_THREADS];
+};
 
 struct _MyThread *running;
 //*** Linked List queue*************
 struct Node* R_front = NULL;
 struct Node* R_rear = NULL;
 void Enqueue(struct _MyThread *x) {
+	printf("Queue is being added\n");
+		
 	struct Node* temp = 
 		(struct Node*)malloc(sizeof(struct Node));
 	temp->data =x; 
@@ -37,6 +43,7 @@ void Enqueue(struct _MyThread *x) {
 	}
 	R_rear->next = temp;
 	R_rear = temp;
+	
 }
 
 void Dequeue() {
@@ -70,7 +77,7 @@ void addChildList(int id){
 	for(k=0;k<MAX_THREADS;k++)
 		if(running->child[k]==0)
 		{	running->child[k]=id; break;}
-	printf("Thread ID %d added to Parent(%d) child list\nChild list: ",id,running->id);
+	printf("Thread ID %d added to Parent(%d) child list\nChild list of Thread %d: ",id,running->id,running->id);
 	for(k=0;k<10;k++)
 		printf("%d ",running->child[k]);
 	printf("\n");
@@ -145,7 +152,7 @@ MyThread MyThreadCreate(void(*start_funct)(void *), void *args){
 	//makecontext(&(readyqueue[numThread].context),start_funct,1,args);
 	makecontext(&t->context,start_funct,1,args);
 	t->id=numThread++;	
-	
+	//printf("huuuuh\n");
 	int k;
 	for(k=0;k<MAX_THREADS;k++){
 		t->child[k]=0;
@@ -193,23 +200,20 @@ int MyThreadJoin(MyThread thread){
 void MyThreadExit(){
 	printf("Thread ID %d Exiting, ",running->id);
 	Print();
-	//if(R_front!=NULL)
-	if(running->parent->allblock=1){
+	if(R_front==NULL )//check for ready queue being empty
+		setcontext(&orig);
+	if(running->parent->allblock==1){//check for parent having JoinAll on
 		checkparChild(running->id);
 		if(running->parent->child[0]==0)
 		{	Enqueue(running->parent);running->parent->allblock=0;}
 	}
-	else
-		remList(running->id);
-	if(running->parent->block==running->id)
+	else{ remList(running->id);}
+	if(running->parent->block==running->id)//check for parent having Join on
 	{	Enqueue(running->parent); running->block=0;}
 	running=R_front->data;
-	
 	Dequeue();
-	
 	printf("Thread ID %d running(from Exit) \n",running->id);
 	setcontext(&running->context);
-	
 }
 void MyThreadJoinAll()
 {
@@ -223,4 +227,24 @@ void MyThreadJoinAll()
 	printf("Thread ID %d running(from Joinall)\n",running->id);
 	Dequeue();
 	swapcontext(&(t->context),&running->context);
+}
+MySemaphore MySemaphoreInit(int initialValue)
+{
+	struct _MySemaphore *s=malloc(sizeof(struct _MySemaphore));
+	s->value=initialValue;
+	int k;
+	for(k=0;k<MAX_THREADS;k++){
+		s->blocked[k]=0;
+	}
+	printf("Semaphore with value %d created by Thread %d\n",s->value,running->id);
+	return (void*)s;
+}
+int MySemaphoreDestroy(MySemaphore sem){
+	struct _MySemaphore *s=(struct _MySemaphore*)sem;
+	if(s->blocked[0]==0)
+	{	printf("Semaphore with value %d destroyed by Thread %d\n",s->value,running->id);free(s); return 0;
+	}
+	else
+	{	printf("Semaphore with value %d cannot be destroyed",s->value);return -1; 
+	}
 }
