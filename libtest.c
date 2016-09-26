@@ -12,7 +12,8 @@ static ucontext_t orig;
 struct _MyThread{
 	ucontext_t context;//context of thread
 	int child[MAX_THREADS];//ID of children
-	int block;//ID of blocking thread. 	
+	int block;//ID of blocking thread. 
+	int allblock;
 	int id;
 	struct _MyThread* parent;//pointer to parent
 };
@@ -69,7 +70,7 @@ void addChildList(int id){
 	for(k=0;k<MAX_THREADS;k++)
 		if(running->child[k]==0)
 		{	running->child[k]=id; break;}
-	printf("Thread %d ID added to Parent(%d) child list\nChild list: ",id,running->id);
+	printf("Thread ID %d added to Parent(%d) child list\nChild list: ",id,running->id);
 	for(k=0;k<10;k++)
 		printf("%d ",running->child[k]);
 	printf("\n");
@@ -87,7 +88,6 @@ void remList(int id){
 	for(k=0;k<MAX_THREADS;k++)
 		if(t->child[k]==id)
 		{	pos=k;
-			printf("FOUND AT%d\n",pos);
 			for(k=pos;k<MAX_THREADS-1;k++)
 				t->child[k]=t->child[k+1];
 			break;
@@ -99,11 +99,18 @@ void remList(int id){
 	printf("\n");
 	
 }
+int checkparChild(int id){
+	int k;
+	for(k=0;k<MAX_THREADS;k++)
+		if(running->parent->child[k]==id)
+		{	remList(id); return 1;}
+		
+	return 0;		
+}
+
 void MyThreadInit(void(*start_funct)(void *), void *args){
 	//printf("%d\n",*args);
 	static ucontext_t mainContext;
-	
-
 	getcontext(&orig);
 	getcontext(&mainContext);
 	mainContext.uc_link=&orig;
@@ -120,6 +127,7 @@ void MyThreadInit(void(*start_funct)(void *), void *args){
 	for(k=0;k<MAX_THREADS;k++){
 		running->child[k]=0;
 		running->block=0;
+		running->allblock=0;
 	}
 	running->parent=running;
 	printf("Thread ID %d initalising (Main) \n",running->id);
@@ -142,52 +150,77 @@ MyThread MyThreadCreate(void(*start_funct)(void *), void *args){
 	for(k=0;k<MAX_THREADS;k++){
 		t->child[k]=0;
 		t->block=0;
+		t->allblock=0;
 	}
 	t->parent=running;
 	addChildList(t->id);
-	printf("Thread ID %d created\n",t->id);
+	printf("Thread ID %d created, ",t->id);
 	//printf("My Parent is %d \n",t->parent->id);
 	Enqueue(t);
 	Print();
-	printf("%x\n",t);
-	return *((MyThread*)t);
+	return ((void*)t);
 }
 void MyThreadYield(){
 	getcontext(&running->context);
 	Enqueue(running);
 	printf("Thread ID %d yielding\n",running->id);
-	Print();
 	running=R_front->data;
 	Print();
 	Dequeue();
-	printf("Thread ID %d running, ",running->id);
+	printf("Thread ID %d running\n",running->id);
 	//printf("My Parent is %d \n",running->parent->id);
 	if(R_rear!=NULL)
 	swapcontext(&((R_rear->data)->context),&running->context);
 }
 int MyThreadJoin(MyThread thread){
-	struct _MyThread *t;
-	printf("%x\n",thread);
-	//t=malloc(sizeof(struct _MyThread));
-	t=(struct _MyThread*)(&thread);
-	//printf("%d\n",t->id);
+	struct _MyThread* t;
+	t=(struct _MyThread*)(thread);
 	if(checkChild(t->id)!=0)
-		printf("Child owoo\n");
+	{	
+		printf("Thread ID %d waiting for Thread ID %d\n",running->id,t->id);
+		running=R_front->data;
+		t->parent->block=t->id;
+		Print();
+		Dequeue();
+		printf("Thread ID %d running(from Join)\n",running->id);
+		swapcontext(&((t->parent)->context),&running->context);
+		return 0;
+	}
+	else
+		return -1;
 	
 }
 void MyThreadExit(){
 	printf("Thread ID %d Exiting, ",running->id);
-	
-	printf("My Parent is %d \n",running->parent->id);
 	Print();
 	//if(R_front!=NULL)
-	remList(running->id);
+	if(running->parent->allblock=1){
+		checkparChild(running->id);
+		if(running->parent->child[0]==0)
+		{	Enqueue(running->parent);running->parent->allblock=0;}
+	}
+	else
+		remList(running->id);
+	if(running->parent->block==running->id)
+	{	Enqueue(running->parent); running->block=0;}
 	running=R_front->data;
+	
 	Dequeue();
-	printf("Thread ID %d running \n",running->id);
-	//if(running.id==1)
-	//	setcontext(&orig);
+	
+	printf("Thread ID %d running(from Exit) \n",running->id);
 	setcontext(&running->context);
 	
 }
-
+void MyThreadJoinAll()
+{
+	if(running->child[0]==0)
+		return;
+	struct _MyThread* t=malloc(sizeof(struct _MyThread));
+	t=running;
+	running->allblock=1;
+	running=R_front->data;
+	printf("Thread ID %d waiting for children\n",t->id);
+	printf("Thread ID %d running(from Joinall)\n",running->id);
+	Dequeue();
+	swapcontext(&(t->context),&running->context);
+}

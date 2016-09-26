@@ -13,10 +13,9 @@ void t1(void * who)
 void t0(void * dummy)
 {
   MyThread t=MyThreadCreate(t1, (void *)1);
-  //MyThreadCreate(t1, (void *)1);
-  
-  MyThreadJoin(t);
-  //printf("huh");
+  MyThreadCreate(t1, (void *)1);
+  MyThreadJoinAll();
+  //printf("Wopp de do=%d\n",ts);
 }
 int main ()
 {

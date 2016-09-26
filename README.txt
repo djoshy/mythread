@@ -1,7 +1,8 @@
 v0.1 getting library and makefile working
-v0.2 got MyThreadCreate(),MyThreadYield(),MyThreadExit()
+v0.2 got MyThreadCreate(),MyThreadYield(),MyThreadExit() working
+v0.5 got MyThreadJoin() and MyThreadJoinAll() working
 
-
-Goals:
-Need to add parent pointer, blocking list and child list to container.
-Need to add block list update in MyThreadExit()
+Immediate Goals:
+(i)Change child id list to dynamic
+(ii)confirm return value for MyThreadJoin()
+(iii)Semaphores
