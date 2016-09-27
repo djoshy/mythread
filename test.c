@@ -49,19 +49,21 @@ void print(struct c_Node* list){
 	printf("\n");
 }
 void rm_child(int id,struct c_Node** list){
-	struct c_Node** ptr=list;
-	struct c_Node** prev=list;
-	while(*ptr!=NULL)
-	{
-		
-		if(id==(*ptr)->data)
-		{
-			(*prev)->next=(*ptr)->next;
-			return;
-		}
-		*prev=*ptr;
-		(*ptr)=(*ptr)->next;
+	struct c_Node* ptr=*list;
+	struct c_Node* prev;
+	if(ptr!=NULL && ptr->data==id){
+		*list=ptr->next;
+		free(ptr);
+		return;
 	}
+	while(ptr!=NULL && ptr->data!=id )
+	{
+		prev=ptr;
+		ptr=ptr->next;
+	}
+	if(ptr==NULL) return;
+	prev->next=ptr->next;
+	free(ptr);
 }
 
 void main()
@@ -69,8 +71,17 @@ void main()
     struct c_Node* clist;
 	add_child(1,&clist);
 	add_child(3,&clist);
+	add_child(5,&clist);
+	add_child(7,&clist);
+	
 	//printf("%d\n",c_search(4,clist));
 	//print(clist);
+	print(clist);
 	rm_child(3,&clist);
 	print(clist);
+	rm_child(1,&clist);
+	print(clist);
+	rm_child(7,&clist);
+	print(clist);
+	
 }

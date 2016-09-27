@@ -6,10 +6,10 @@ MySemaphore s;
 void t2(void * l)
 {
   ++a;
-  MySemaphoreWait(s);
+ // MySemaphoreWait(s);
   printf("Tracker is %d\n",a);
-  MySemaphoreSignal(s);
-  MySemaphoreDestroy(s);
+ // MySemaphoreSignal(s);
+  
   
   MyThreadExit();
 }
@@ -18,11 +18,11 @@ void t1(void * who)
   
  
  // MyThreadYield();
-  MySemaphoreWait(s);
-  // MyThreadCreate(t2, (void *)1);
+//  MySemaphoreWait(s);
+ // MyThreadCreate(t2, (void *)1);
   ++a;
   printf("Tracker is %d\n",a);
-  MySemaphoreSignal(s);
+ // MySemaphoreSignal(s);
   
   MyThreadExit();
 }
@@ -32,9 +32,9 @@ void t0(void * dummy)
   printf("Tracker is %d\n",a);
   MyThread t=MyThreadCreate(t1, (void *)1);
   MyThreadCreate(t2, (void *)1);
-  //MyThreadJoinAll();
+  MyThreadJoinAll();
   s=MySemaphoreInit(0);
-  MyThreadYield();
+  // MyThreadYield();
   MySemaphoreSignal(s);
   
   MyThreadExit();

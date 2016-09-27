@@ -36,16 +36,52 @@ struct _MySemaphore{
 //*** Linked List queue*************
 struct Node* R_front = NULL;
 struct Node* R_rear = NULL;
-void add_child(int x, struct Node** list){
+
+
+int checkChild(int id,struct c_Node* list){
+	struct c_Node* ptr=list;
+	while(ptr!=NULL)
+	{	
+		if(id==ptr->data)
+			return 1;
+		ptr=ptr->next;
+	}
+	return 0;
+}
+void c_print(struct c_Node* list){
+	struct c_Node* ptr=list;
+	while(ptr!=NULL)
+	{	printf("%d ",ptr->data);ptr=ptr->next;}
+	printf("\n");
+}
+void addChildList(int x, struct c_Node** list){
 	struct c_Node* temp=(struct c_Node*)malloc(sizeof(struct c_Node));
 	temp->data=x;
 		
 	if(*list==NULL)
-	{	*list=temp; *list->next=NULL;return;}
+	{	*list=temp; (*list)->next=NULL;return;}
 	temp->next=*list;
 	*list=temp;
 	
 
+}
+void remList(int id,struct c_Node** list){
+	struct c_Node* ptr=*list;
+	struct c_Node* prev;
+	if(ptr!=NULL && ptr->data==id){
+		*list=ptr->next;
+		free(ptr);
+		return;
+	}
+	while(ptr!=NULL && ptr->data!=id )
+	{
+		prev=ptr;
+		ptr=ptr->next;
+	}
+	
+	if(ptr==NULL) return;
+	prev->next=ptr->next;
+	free(ptr);
 }
 void Enqueue(struct _MyThread *x) {
 	//printf("Queue is being added\n");
@@ -116,7 +152,7 @@ void s_remove(struct Node** front, struct Node** rear){
 	
 }
 
-
+/*
 void addChildList(int id){
 	int k;
 	for(k=0;k<MAX_THREADS;k++)
@@ -150,15 +186,7 @@ void remList(int id){
 		printf("%d ",t->child[k]);
 	printf("\n");
 	
-}
-int checkparChild(int id){
-	int k;
-	for(k=0;k<MAX_THREADS;k++)
-		if(running->parent->child[k]==id)
-		{	return 1;}
-		
-	return 0;		
-}
+}*/
 
 void MyThreadInit(void(*start_funct)(void *), void *args){
 	//printf("%d\n",*args);
@@ -213,7 +241,9 @@ MyThread MyThreadCreate(void(*start_funct)(void *), void *args){
 	t->parent=running;
 	printf("Thread ID %d created, ",t->id);
 	
-	addChildList(t->id);
+	addChildList(t->id,&(running->clist));
+	printf("Thread ID %d child list: ",running->id);
+	c_print((running->clist));
 	//printf("My Parent is %d \n",t->parent->id);
 	Enqueue(t);
 	Print();
@@ -234,7 +264,7 @@ void MyThreadYield(){
 int MyThreadJoin(MyThread thread){
 	struct _MyThread* t;
 	t=(struct _MyThread*)(thread);
-	if(checkChild(t->id)!=0)
+	if(checkChild(t->id,t->clist)!=0)
 	{	
 		printf("Thread ID %d waiting for Thread ID %d\n",running->id,t->id);
 		running=R_front->data;
@@ -252,9 +282,11 @@ int MyThreadJoin(MyThread thread){
 void MyThreadExit(){
 	printf("Thread ID %d Exiting, ",running->id);
 	Print();
-	remList(running->id);
+	remList(running->id,&(running->parent->clist));
+	printf("Thread ID %d child list: ",running->parent->id);
+	c_print(running->parent->clist);
 	if(running->parent->allblock==1){// || checkparChild(running->id)==1){//check for parent having JoinAll on
-		if(running->parent->child[0]==0)
+		if(running->parent->clist==NULL)
 		{	printf("Finishing Join all for %d\n",running->parent->id);Enqueue(running->parent);running->parent->allblock=0;}
 	}
 	
@@ -270,7 +302,7 @@ void MyThreadExit(){
 }
 void MyThreadJoinAll()
 {
-	if(running->child[0]==0)
+	if(running->clist==NULL)
 		return;
 	struct _MyThread* t=malloc(sizeof(struct _MyThread));
 	t=running;
