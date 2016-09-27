@@ -11,11 +11,16 @@ static int numThread = 1;
 static ucontext_t orig;
 struct _MyThread{
 	ucontext_t context;//context of thread
-	int child[MAX_THREADS];//ID of children
+	//int child[MAX_THREADS];//ID of children
 	int block;//ID of blocking thread. 
 	int allblock;
+	struct c_Node* clist;
 	int id;
 	struct _MyThread* parent;//pointer to parent
+};
+struct c_Node {
+	int data;
+	struct c_Node* next;
 };
 struct Node {
 	struct _MyThread* data;
@@ -31,6 +36,17 @@ struct _MySemaphore{
 //*** Linked List queue*************
 struct Node* R_front = NULL;
 struct Node* R_rear = NULL;
+void add_child(int x, struct Node** list){
+	struct c_Node* temp=(struct c_Node*)malloc(sizeof(struct c_Node));
+	temp->data=x;
+		
+	if(*list==NULL)
+	{	*list=temp; *list->next=NULL;return;}
+	temp->next=*list;
+	*list=temp;
+	
+
+}
 void Enqueue(struct _MyThread *x) {
 	//printf("Queue is being added\n");
 	struct Node* temp = 
@@ -158,13 +174,16 @@ void MyThreadInit(void(*start_funct)(void *), void *args){
 	running=malloc(sizeof(struct _MyThread));
 	running->context=mainContext;
 	running->id=numThread++;
-	
+	/*
 	int k;
 	for(k=0;k<MAX_THREADS;k++){
 		running->child[k]=0;
-		running->block=0;
-		running->allblock=0;
+		
 	}
+	*/
+	running->clist==NULL;
+	running->block=0;
+	running->allblock=0;
 	running->parent=running;
 	printf("Thread ID %d initalising (Main) \n",running->id);
 	swapcontext(&orig,&mainContext);
@@ -182,12 +201,15 @@ MyThread MyThreadCreate(void(*start_funct)(void *), void *args){
 	makecontext(&t->context,(void *)start_funct,1,args);
 	t->id=numThread++;	
 	//printf("huuuuh\n");
-	int k;
+	/*int k;
+	
 	for(k=0;k<MAX_THREADS;k++){
 		t->child[k]=0;
-		t->block=0;
-		t->allblock=0;
 	}
+	*/
+	t->clist=NULL;
+	t->block=0;
+	t->allblock=0;
 	t->parent=running;
 	printf("Thread ID %d created, ",t->id);
 	

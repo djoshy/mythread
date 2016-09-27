@@ -16,61 +16,61 @@
  *
  *****************************************************************************/
 
-#include "libtest.h"
 
-// evaluate a Fibonacci number:
-//	fib(0) = 0
-//	fib(1) = 1
-//	fib(n) = fib(n-1) + fib(n-2)  [n>1]
-// this function is messy because we have to pass everything as a
-// generic parameter (void*).
-// also, the function parameter is a value/result -- therefore it is a
-// pointer to an integer.
-//
-void fib(void *in)
-{
-  int *n = (int *)in;	 	/* cast input parameter to an int * */
+struct c_Node {
+	int data;
+	struct c_Node* next;
+};
+void add_child(int x, struct c_Node** list){
+	struct c_Node* temp=(struct c_Node*)malloc(sizeof(struct c_Node));
+	temp->data=x;
+		
+	if(*list==NULL)
+	{	*list=temp; (*list)->next=NULL;return;}
+	temp->next=*list;
+	*list=temp;
+	
 
-  if (*n == 0)
-    /* pass */;			/* return 0; it already is zero */
-
-  else if (*n == 1)
-    /* pass */;			/* return 1; it already is one */
-
-  else {
-    int n1 = *n - 1;		/* child 1 param */
-    int n2 = *n - 2;		/* child 2 param */
-
-    // create children; parameter points to int that is initialized.
-    // this is the location they will write to as well.
-    MyThreadCreate(fib, (void*)&n1);
-    MyThreadCreate(fib, (void*)&n2);
-    // after creating children, wait for them to finish
-    MyThreadJoinAll();
-    //  write to addr n_ptr points; return results in addr pointed to
-    //  by input parameter
-    *n = n1 + n2;
-	printf("Current=%d\n", *n);
-  }
-
-  MyThreadExit();		// always call this at end
+}
+int c_search(int id,struct c_Node* list){
+	struct c_Node* ptr=list;
+	while(ptr!=NULL)
+	{	
+		if(id==ptr->data)
+			return 1;
+		ptr=ptr->next;
+	}
+	return 0;
+}
+void print(struct c_Node* list){
+	struct c_Node* ptr=list;
+	while(ptr!=NULL)
+	{	printf("%d ",ptr->data);ptr=ptr->next;}
+	printf("\n");
+}
+void rm_child(int id,struct c_Node** list){
+	struct c_Node** ptr=list;
+	struct c_Node** prev=list;
+	while(*ptr!=NULL)
+	{
+		
+		if(id==(*ptr)->data)
+		{
+			(*prev)->next=(*ptr)->next;
+			return;
+		}
+		*prev=*ptr;
+		(*ptr)=(*ptr)->next;
+	}
 }
 
-main(int argc, char *argv[])
+void main()
 {
-  int n;
-
-  if (argc != 2) {
-    printf("usage: %s <n>\n", argv[0]);
-    exit(-1);
-  }
-  n = atoi(argv[1]);
-  if (n < 0 || n > 10) {
-    printf("invalid value for n (%d)\n", n);
-    exit(-1);
-  }
-
- // printf("fib(%d) = ", n);
-  MyThreadInit(fib, (void*)&n);
-  printf("%d\n", n);
+    struct c_Node* clist;
+	add_child(1,&clist);
+	add_child(3,&clist);
+	//printf("%d\n",c_search(4,clist));
+	//print(clist);
+	rm_child(3,&clist);
+	print(clist);
 }
