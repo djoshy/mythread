@@ -15,73 +15,65 @@
  *  It is provided for illusration.  
  *
  *****************************************************************************/
+#include "libtest.h"
 
 
-struct c_Node {
-	int data;
-	struct c_Node* next;
-};
-void add_child(int x, struct c_Node** list){
-	struct c_Node* temp=(struct c_Node*)malloc(sizeof(struct c_Node));
-	temp->data=x;
-		
-	if(*list==NULL)
-	{	*list=temp; (*list)->next=NULL;return;}
-	temp->next=*list;
-	*list=temp;
-	
 
-}
-int c_search(int id,struct c_Node* list){
-	struct c_Node* ptr=list;
-	while(ptr!=NULL)
-	{	
-		if(id==ptr->data)
-			return 1;
-		ptr=ptr->next;
-	}
-	return 0;
-}
-void print(struct c_Node* list){
-	struct c_Node* ptr=list;
-	while(ptr!=NULL)
-	{	printf("%d ",ptr->data);ptr=ptr->next;}
-	printf("\n");
-}
-void rm_child(int id,struct c_Node** list){
-	struct c_Node* ptr=*list;
-	struct c_Node* prev;
-	if(ptr!=NULL && ptr->data==id){
-		*list=ptr->next;
-		free(ptr);
-		return;
-	}
-	while(ptr!=NULL && ptr->data!=id )
-	{
-		prev=ptr;
-		ptr=ptr->next;
-	}
-	if(ptr==NULL) return;
-	prev->next=ptr->next;
-	free(ptr);
-}
+int n, m;
+int yield = 0;
+int join = 0;
 
-void main()
+void t2(void * who)
 {
-    struct c_Node* clist;
-	add_child(1,&clist);
-	add_child(3,&clist);
-	add_child(5,&clist);
-	add_child(7,&clist);
-	
-	//printf("%d\n",c_search(4,clist));
-	//print(clist);
-	print(clist);
-	rm_child(3,&clist);
-	print(clist);
-	rm_child(1,&clist);
-	print(clist);
-	rm_child(7,&clist);
-	print(clist);
-	
+  printf("t2 %d start\n", (int)who);
+  MyThreadExit();
 }
+
+void t1(void *);
+
+int makeThreads(char *me, void (*t)(void *), int many)
+{
+  MyThread T;
+  int i;
+  for (i = 0; i < many; i++) {
+    printf("%s create %d\n", me, i);
+    T = MyThreadCreate(t, (void *)i);
+    if (yield)
+      MyThreadYield();      
+  }
+  if (join)
+    MyThreadJoin(T);
+}
+
+void t1(void * who_)
+{
+  char me[16];
+  int who = (int)who_;
+  sprintf(me, "t1 %d", who);
+  printf("%s start\n", me);
+  makeThreads(me, t2, m);
+  printf("t1 %d end\n", who);
+  MyThreadExit();
+}
+
+void t0(void * dummy)
+{
+  printf("t0 start\n");
+  makeThreads("t0", t1, n);
+  printf("t0 end\n");
+  MyThreadExit();
+}
+
+int main(int argc, char *argv[])
+{
+  if (argc != 5) {
+    return -1;
+  }
+  n = atoi(argv[1]);
+  m = atoi(argv[2]);
+  yield = atoi(argv[3]);
+  join = atoi(argv[4]);
+
+  MyThreadInit(t0, NULL);
+}
+

@@ -168,7 +168,7 @@ void MyThreadInit(void(*start_funct)(void *), void *args){
 	running->block=0;
 	running->allblock=0;
 	running->parent=running;
-	printf("Thread ID %d initalising (Main) \n",running->id);
+	//printf("Thread ID %d initalising (Main) \n",running->id);
 	swapcontext(&orig,&mainContext);
 	
 }
@@ -208,7 +208,7 @@ void MyThreadYield(){
 int MyThreadJoin(MyThread thread){
 	struct _MyThread* t;
 	t=(struct _MyThread*)(thread);
-	if(checkChild(t->id,t->clist)!=0)
+	if(checkChild(t->id,running->clist)!=0)
 	{	
 		printf("Thread ID %d waiting for Thread ID %d\n",running->id,t->id);
 		running=R_front->data;
@@ -231,7 +231,8 @@ void MyThreadExit(){
 	c_print(running->parent->clist);
 	if(running->parent->allblock==1){//check for JoinAll
 		if(running->parent->clist==NULL)
-		{	printf("Finishing Join all for %d\n",running->parent->id);Enqueue(running->parent);running->parent->allblock=0;}
+		{	printf("Finishing Join all for %d\n",running->parent->id);
+			Enqueue(running->parent);running->parent->allblock=0;}
 	}
 	if(running->parent->block==running->id)//check for parent having Join on
 	{	Enqueue(running->parent); running->block=0;}
@@ -250,8 +251,8 @@ void MyThreadJoinAll()
 	t=running;
 	running->allblock=1;
 	running=R_front->data;
-	printf("Thread ID %d waiting for children\n",t->id);
-	printf("Thread ID %d running(from Joinall)\n",running->id);
+	//printf("Thread ID %d waiting for children\n",t->id);
+	//printf("Thread ID %d running(from Joinall)\n",running->id);
 	Dequeue();
 	swapcontext(&(t->context),&running->context);
 }
@@ -262,27 +263,29 @@ MySemaphore MySemaphoreInit(int initialValue)
 	struct _MySemaphore *s=malloc(sizeof(struct _MySemaphore));
 	s->value=initialValue;
 	s->f_list=s->r_list=NULL;
-	printf("Semaphore with value %d created by Thread %d\n",s->value,running->id);
+	//printf("Semaphore with value %d created by Thread %d\n",s->value,running->id);
 	return (void*)s;
 }
 int MySemaphoreDestroy(MySemaphore sem){
 	struct _MySemaphore *s=(struct _MySemaphore*)sem;
 	if(s->f_list==NULL)
-	{	printf("Semaphore with value %d destroyed by Thread %d\n",s->value,running->id);free(s); return 0;
+	{	//printf("Semaphore with value %d destroyed by Thread %d\n",s->value,running->id);
+		free(s); return 0;
 	}
 	else
-	{	printf("Semaphore with value %d cannot be destroyed!!!\n",s->value);return -1; 
+	{	//printf("Semaphore with value %d cannot be destroyed!!!\n",s->value);
+		return -1; 
 	}
 }
 void MySemaphoreWait(MySemaphore sem){
-	printf("Thread ID %d is waiting on semaphore\n",running->id);
+	//printf("Thread ID %d is waiting on semaphore\n",running->id);
 	struct _MySemaphore *s=(struct _MySemaphore*)sem;
 	if(s->value<1){
 	s_add(&(s->f_list),&(s->r_list));
 	running=R_front->data;
 	Dequeue();
-	printf("Added Thread %d to sem's blocking queue\n",s->r_list->data->id);
-	printf("Thread ID %d running(from semwait)\n",running->id);
+	//printf("Added Thread %d to sem's blocking queue\n",s->r_list->data->id);
+	//printf("Thread ID %d running(from semwait)\n",running->id);
 	swapcontext(&((s->r_list->data)->context),&running->context);
 	}
 	else
@@ -291,9 +294,9 @@ void MySemaphoreWait(MySemaphore sem){
 void MySemaphoreSignal(MySemaphore sem){
 	struct _MySemaphore *s=(struct _MySemaphore*)sem;
 	if(s->f_list!=NULL){
-		printf("Added Thread %d to ready queue(from semsig)\n",s->f_list->data->id);
+		//printf("Added Thread %d to ready queue(from semsig)\n",s->f_list->data->id);
 		s_remove(&(s->f_list),&(s->r_list));
-		Print();
+		//Print();
 	}
 	else
 		(s->value)++;
