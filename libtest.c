@@ -21,22 +21,18 @@ struct Node {
 	struct _MyThread* data;
 	struct Node* next;
 };
-
+struct _MyThread *running;
 struct _MySemaphore{
 	int value;//semaphore value
-	int blocked[MAX_THREADS];//blocked linked list values
+	//blocked linked list values
+	struct Node* f_list;
+	struct Node* r_list;
 };
-struct semNode {
-	struct _MySemaphore* data;
-	struct Node* next;
-};
-struct _MyThread *running;
 //*** Linked List queue*************
 struct Node* R_front = NULL;
 struct Node* R_rear = NULL;
 void Enqueue(struct _MyThread *x) {
-	printf("Queue is being added\n");
-		
+	//printf("Queue is being added\n");
 	struct Node* temp = 
 		(struct Node*)malloc(sizeof(struct Node));
 	temp->data =x; 
@@ -69,12 +65,41 @@ void Print() {
 	printf("Ready queue: ");
 	while(temp != NULL) {
 		//printf("%d ",(temp->data).id);
-		printf("%d(%d)",(temp->data)->id,((temp->data)->parent)->id);
+		printf("%d(%d) ",(temp->data)->id,((temp->data)->parent)->id);
 		temp = temp->next;
 	}
 	printf("\n");
 } 
 /******************************/
+
+void s_add(struct Node** front, struct Node** rear){
+	struct Node* temp = 
+		(struct Node*)malloc(sizeof(struct Node));
+	temp->data =running; 
+	temp->next = NULL;
+	
+	if(*front==NULL && *rear == NULL){ 
+		*front=*rear=temp;
+		return;
+	}
+	(*rear)->next = temp;
+	(*rear)=temp;
+}
+void s_remove(struct Node** front, struct Node** rear){
+	//struct Node* temp = front;
+	if(*front==NULL){
+		printf("Semaphore queue is Empty\n");
+		return;
+	}	
+	if(*front==*rear)
+		{Enqueue((*front)->data);*front=*rear=NULL;}
+	else{
+		Enqueue((*front)->data);
+		*front=(*front)->next;
+	}
+	
+}
+
 
 void addChildList(int id){
 	int k;
@@ -164,8 +189,9 @@ MyThread MyThreadCreate(void(*start_funct)(void *), void *args){
 		t->allblock=0;
 	}
 	t->parent=running;
-	addChildList(t->id);
 	printf("Thread ID %d created, ",t->id);
+	
+	addChildList(t->id);
 	//printf("My Parent is %d \n",t->parent->id);
 	Enqueue(t);
 	Print();
@@ -235,21 +261,45 @@ void MyThreadJoinAll()
 }
 MySemaphore MySemaphoreInit(int initialValue)
 {
+	if(initialValue<0)
+		return NULL;
 	struct _MySemaphore *s=malloc(sizeof(struct _MySemaphore));
 	s->value=initialValue;
-	int k;
-	for(k=0;k<MAX_THREADS;k++){
-		s->blocked[k]=0;
-	}
+	s->f_list=s->r_list=NULL;
 	printf("Semaphore with value %d created by Thread %d\n",s->value,running->id);
 	return (void*)s;
 }
 int MySemaphoreDestroy(MySemaphore sem){
 	struct _MySemaphore *s=(struct _MySemaphore*)sem;
-	if(s->blocked[0]==0)
+	if(s->f_list==NULL)
 	{	printf("Semaphore with value %d destroyed by Thread %d\n",s->value,running->id);free(s); return 0;
 	}
 	else
-	{	printf("Semaphore with value %d cannot be destroyed",s->value);return -1; 
+	{	printf("Semaphore with value %d cannot be destroyed!!!\n",s->value);return -1; 
 	}
+}
+void MySemaphoreWait(MySemaphore sem){
+	printf("Thread ID %d is waiting on semaphore\n",running->id);
+	struct _MySemaphore *s=(struct _MySemaphore*)sem;
+	if(s->value<1){
+	s_add(&(s->f_list),&(s->r_list));
+	running=R_front->data;
+	Dequeue();
+	printf("Added Thread %d to sem's blocking queue\n",s->r_list->data->id);
+	printf("Thread ID %d running(from semwait)\n",running->id);
+	swapcontext(&((s->r_list->data)->context),&running->context);
+	}
+	else
+		(s->value)--;
+		
+}
+void MySemaphoreSignal(MySemaphore sem){
+	struct _MySemaphore *s=(struct _MySemaphore*)sem;
+	if(s->f_list!=NULL){
+		printf("Added Thread %d to ready queue(from semsig)\n",s->f_list->data->id);
+		s_remove(&(s->f_list),&(s->r_list));
+		Print();
+	}
+	else
+		(s->value)++;
 }

@@ -8,4 +8,5 @@ void MyThreadJoinAll(void);
 typedef void *MySemaphore;
 MySemaphore MySemaphoreInit(int initialValue);
 int MySemaphoreDestroy(MySemaphore sem);
+void MySemaphoreWait(MySemaphore sem);
 void MySemaphoreSignal(MySemaphore sem);
