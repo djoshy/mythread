@@ -11,7 +11,6 @@ static int numThread = 1;
 static ucontext_t orig;
 struct _MyThread{
 	ucontext_t context;//context of thread
-	//int child[MAX_THREADS];//ID of children
 	int block;//ID of blocking thread. 
 	int allblock;
 	struct c_Node* clist;
@@ -152,44 +151,8 @@ void s_remove(struct Node** front, struct Node** rear){
 	
 }
 
-/*
-void addChildList(int id){
-	int k;
-	for(k=0;k<MAX_THREADS;k++)
-		if(running->child[k]==0)
-		{	running->child[k]=id; break;}
-	printf("Thread ID %d added to Parent(%d) child list\nChild list of Thread %d: ",id,running->id,running->id);
-	for(k=0;k<10;k++)
-		printf("%d ",running->child[k]);
-	printf("\n");
-
-}
-int checkChild(int id){
-	int k;
-	for(k=0;k<MAX_THREADS;k++)
-		if(running->child[k]==id||running->child[k]==0)
-			return running->child[k];
-}
-void remList(int id){
-	struct _MyThread* t=running->parent;
-	int k,pos;
-	for(k=0;k<MAX_THREADS;k++)
-		if(t->child[k]==id)
-		{	pos=k;
-			for(k=pos;k<MAX_THREADS-1;k++)
-				t->child[k]=t->child[k+1];
-			break;
-		}
-	
-	printf("Thread %d ID removed from Parent(%d) child list\nChild list: ",id,t->id);
-	for(k=0;k<10;k++)
-		printf("%d ",t->child[k]);
-	printf("\n");
-	
-}*/
 
 void MyThreadInit(void(*start_funct)(void *), void *args){
-	//printf("%d\n",*args);
 	static ucontext_t mainContext;
 	getcontext(&orig);
 	getcontext(&mainContext);
@@ -197,18 +160,10 @@ void MyThreadInit(void(*start_funct)(void *), void *args){
 	mainContext.uc_stack.ss_sp=malloc(MEM);
 	mainContext.uc_stack.ss_size=MEM;
 	mainContext.uc_stack.ss_flags=0;
-	//makecontext(&mainContext,start_funct,1,args);
 	makecontext(&mainContext,(void *)start_funct,1,args);
 	running=malloc(sizeof(struct _MyThread));
 	running->context=mainContext;
 	running->id=numThread++;
-	/*
-	int k;
-	for(k=0;k<MAX_THREADS;k++){
-		running->child[k]=0;
-		
-	}
-	*/
 	running->clist==NULL;
 	running->block=0;
 	running->allblock=0;
@@ -225,26 +180,16 @@ MyThread MyThreadCreate(void(*start_funct)(void *), void *args){
 	t->context.uc_stack.ss_sp=malloc(MEM);
 	t->context.uc_stack.ss_size=MEM;
 	t->context.uc_stack.ss_flags=0;
-	//makecontext(&(readyqueue[numThread].context),start_funct,1,args);
 	makecontext(&t->context,(void *)start_funct,1,args);
 	t->id=numThread++;	
-	//printf("huuuuh\n");
-	/*int k;
-	
-	for(k=0;k<MAX_THREADS;k++){
-		t->child[k]=0;
-	}
-	*/
 	t->clist=NULL;
 	t->block=0;
 	t->allblock=0;
 	t->parent=running;
 	printf("Thread ID %d created, ",t->id);
-	
 	addChildList(t->id,&(running->clist));
 	printf("Thread ID %d child list: ",running->id);
 	c_print((running->clist));
-	//printf("My Parent is %d \n",t->parent->id);
 	Enqueue(t);
 	Print();
 	return ((void*)t);
@@ -257,7 +202,6 @@ void MyThreadYield(){
 	Print();
 	Dequeue();
 	printf("Thread ID %d running\n",running->id);
-	//printf("My Parent is %d \n",running->parent->id);
 	if(R_rear!=NULL)
 	swapcontext(&((R_rear->data)->context),&running->context);
 }
@@ -285,11 +229,10 @@ void MyThreadExit(){
 	remList(running->id,&(running->parent->clist));
 	printf("Thread ID %d child list: ",running->parent->id);
 	c_print(running->parent->clist);
-	if(running->parent->allblock==1){// || checkparChild(running->id)==1){//check for parent having JoinAll on
+	if(running->parent->allblock==1){//check for JoinAll
 		if(running->parent->clist==NULL)
 		{	printf("Finishing Join all for %d\n",running->parent->id);Enqueue(running->parent);running->parent->allblock=0;}
 	}
-	
 	if(running->parent->block==running->id)//check for parent having Join on
 	{	Enqueue(running->parent); running->block=0;}
 	if(R_front==NULL )//check for ready queue being empty
@@ -297,7 +240,6 @@ void MyThreadExit(){
 	running=R_front->data;
 	Dequeue();
 	printf("Thread ID %d running(from Exit) \n",running->id);
-	
 	setcontext(&running->context);
 }
 void MyThreadJoinAll()
@@ -345,7 +287,6 @@ void MySemaphoreWait(MySemaphore sem){
 	}
 	else
 		(s->value)--;
-		
 }
 void MySemaphoreSignal(MySemaphore sem){
 	struct _MySemaphore *s=(struct _MySemaphore*)sem;
