@@ -21,11 +21,15 @@ struct Node {
 	struct _MyThread* data;
 	struct Node* next;
 };
-struct _MySemaphore{
-	int value;
-	int blocked[MAX_THREADS];
-};
 
+struct _MySemaphore{
+	int value;//semaphore value
+	int blocked[MAX_THREADS];//blocked linked list values
+};
+struct semNode {
+	struct _MySemaphore* data;
+	struct Node* next;
+};
 struct _MyThread *running;
 //*** Linked List queue*************
 struct Node* R_front = NULL;
@@ -110,7 +114,7 @@ int checkparChild(int id){
 	int k;
 	for(k=0;k<MAX_THREADS;k++)
 		if(running->parent->child[k]==id)
-		{	remList(id); return 1;}
+		{	return 1;}
 		
 	return 0;		
 }
@@ -125,7 +129,7 @@ void MyThreadInit(void(*start_funct)(void *), void *args){
 	mainContext.uc_stack.ss_size=MEM;
 	mainContext.uc_stack.ss_flags=0;
 	//makecontext(&mainContext,start_funct,1,args);
-	makecontext(&mainContext,(void(*)(void))start_funct,0);
+	makecontext(&mainContext,(void *)start_funct,1,args);
 	running=malloc(sizeof(struct _MyThread));
 	running->context=mainContext;
 	running->id=numThread++;
@@ -150,7 +154,7 @@ MyThread MyThreadCreate(void(*start_funct)(void *), void *args){
 	t->context.uc_stack.ss_size=MEM;
 	t->context.uc_stack.ss_flags=0;
 	//makecontext(&(readyqueue[numThread].context),start_funct,1,args);
-	makecontext(&t->context,start_funct,1,args);
+	makecontext(&t->context,(void *)start_funct,1,args);
 	t->id=numThread++;	
 	//printf("huuuuh\n");
 	int k;
@@ -200,19 +204,20 @@ int MyThreadJoin(MyThread thread){
 void MyThreadExit(){
 	printf("Thread ID %d Exiting, ",running->id);
 	Print();
-	if(R_front==NULL )//check for ready queue being empty
-		setcontext(&orig);
-	if(running->parent->allblock==1){//check for parent having JoinAll on
-		checkparChild(running->id);
+	remList(running->id);
+	if(running->parent->allblock==1){// || checkparChild(running->id)==1){//check for parent having JoinAll on
 		if(running->parent->child[0]==0)
-		{	Enqueue(running->parent);running->parent->allblock=0;}
+		{	printf("Finishing Join all for %d\n",running->parent->id);Enqueue(running->parent);running->parent->allblock=0;}
 	}
-	else{ remList(running->id);}
+	
 	if(running->parent->block==running->id)//check for parent having Join on
 	{	Enqueue(running->parent); running->block=0;}
+	if(R_front==NULL )//check for ready queue being empty
+		setcontext(&orig);
 	running=R_front->data;
 	Dequeue();
 	printf("Thread ID %d running(from Exit) \n",running->id);
+	
 	setcontext(&running->context);
 }
 void MyThreadJoinAll()

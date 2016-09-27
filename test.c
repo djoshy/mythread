@@ -1,68 +1,76 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<ucontext.h>
-#define MEM 64000
-struct Node {
-	int data;
-	struct Node* next;
-};
-// Two glboal variables to store address of front and rear nodes. 
-struct Node* front = NULL;
-struct Node* rear = NULL;
+/******************************************************************************
+ *
+ *  File Name........: fib.c
+ *
+ *  Description......:
+ *
+ *  Created by vin on 11/21/06
+ *
+ *  No warranty!  This program has not been compiled or tested because
+ *  I do not have a library with which to do so.
+ *
+ *  It is provided for illusration.  
+ *
+ *****************************************************************************/
 
-// To Enqueue an integer
-void Enqueue(int x) {
-	struct Node* temp = 
-		(struct Node*)malloc(sizeof(struct Node));
-	temp->data =x; 
-	temp->next = NULL;
-	if(front == NULL && rear == NULL){
-		front = rear = temp;
-		return;
-	}
-	rear->next = temp;
-	rear = temp;
+#include "libtest.h"
+
+// evaluate a Fibonacci number:
+//	fib(0) = 0
+//	fib(1) = 1
+//	fib(n) = fib(n-1) + fib(n-2)  [n>1]
+// this function is messy because we have to pass everything as a
+// generic parameter (void*).
+// also, the function parameter is a value/result -- therefore it is a
+// pointer to an integer.
+//
+void fib(void *in)
+{
+  int *n = (int *)in;	 	/* cast input parameter to an int * */
+
+  if (*n == 0)
+    /* pass */;			/* return 0; it already is zero */
+
+  else if (*n == 1)
+    /* pass */;			/* return 1; it already is one */
+
+  else {
+    int n1 = *n - 1;		/* child 1 param */
+    int n2 = *n - 2;		/* child 2 param */
+
+    // create children; parameter points to int that is initialized.
+    // this is the location they will write to as well.
+    MyThreadCreate(fib, (void*)&n1);
+    MyThreadCreate(fib, (void*)&n2);
+    // after creating children, wait for them to finish
+    MyThreadJoinAll();
+    //  write to addr n_ptr points; return results in addr pointed to
+    //  by input parameter
+    *n = n1 + n2;
+	printf("Current=%d\n", *n);
+  }
+
+  MyThreadExit();		// always call this at end
 }
 
-// To Dequeue an integer.
-void Dequeue() {
-	struct Node* temp = front;
-	if(front == NULL) {
-		printf("Queue is Empty\n");
-		return;
-	}
-	if(front == rear) {
-		front = rear = NULL;
-	}
-	else {
-		front = front->next;
-	}
-	free(temp);
-}
+main(int argc, char *argv[])
+{
+  int n;
 
-int Front() {
-	if(front == NULL) {
-		printf("Queue is empty\n");
-		return;
-	}
-	return front->data;
-}
+  if (argc != 2) {
+    printf("usage: %s <n>\n", argv[0]);
+    exit(-1);
+  }
+  n = atoi(argv[1]);
+  if (n < 0 || n > 10) {
+    printf("invalid value for n (%d)\n", n);
+    exit(-1);
+  }
 
-void Print() {
-	struct Node* temp = front;
-	while(temp != NULL) {
-		printf("%d ",temp->data);
-		temp = temp->next;
-	}
-	printf("\n");
-}
-
-int main(){
-	/* Drive code to test the implementation. */
-	// Printing elements in Queue after each Enqueue or Dequeue 
-	Enqueue(2); Print(); 
-	Enqueue(4); Print();
-	Enqueue(6); Print();
-	Dequeue();  Print();
-	Enqueue(8); Print();
+ // printf("fib(%d) = ", n);
+  MyThreadInit(fib, (void*)&n);
+  printf("%d\n", n);
 }

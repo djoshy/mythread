@@ -8,5 +8,7 @@ clean:
 	@rm -f run
 	@rm -f *.o 
 
-test: test.c
-	@gcc -o test test.c
+test: test.c libtest.c libtest.h
+	@gcc -c libtest.c
+	@ar rcs libtest.a libtest.o
+	@gcc -o test test.c libtest.a
