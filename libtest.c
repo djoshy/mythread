@@ -186,22 +186,22 @@ MyThread MyThreadCreate(void(*start_funct)(void *), void *args){
 	t->block=0;
 	t->allblock=0;
 	t->parent=running;
-	printf("Thread ID %d created, ",t->id);
+	//printf("Thread ID %d created, ",t->id);
 	addChildList(t->id,&(running->clist));
-	printf("Thread ID %d child list: ",running->id);
-	c_print((running->clist));
+	//printf("Thread ID %d child list: ",running->id);
+	//c_print((running->clist));
 	Enqueue(t);
-	Print();
+	//Print();
 	return ((void*)t);
 }
 void MyThreadYield(){
 	getcontext(&running->context);
 	Enqueue(running);
-	printf("Thread ID %d yielding\n",running->id);
+	//printf("Thread ID %d yielding\n",running->id);
 	running=R_front->data;
-	Print();
+	//Print();
 	Dequeue();
-	printf("Thread ID %d running\n",running->id);
+	//printf("Thread ID %d running\n",running->id);
 	if(R_rear!=NULL)
 	swapcontext(&((R_rear->data)->context),&running->context);
 }
@@ -210,12 +210,12 @@ int MyThreadJoin(MyThread thread){
 	t=(struct _MyThread*)(thread);
 	if(checkChild(t->id,running->clist)!=0)
 	{	
-		printf("Thread ID %d waiting for Thread ID %d\n",running->id,t->id);
+		//printf("Thread ID %d waiting for Thread ID %d\n",running->id,t->id);
 		running=R_front->data;
 		t->parent->block=t->id;
 		Print();
 		Dequeue();
-		printf("Thread ID %d running(from Join)\n",running->id);
+		//printf("Thread ID %d running(from Join)\n",running->id);
 		swapcontext(&((t->parent)->context),&running->context);
 		return 0;
 	}
@@ -224,11 +224,11 @@ int MyThreadJoin(MyThread thread){
 	
 }
 void MyThreadExit(){
-	printf("Thread ID %d Exiting, ",running->id);
-	Print();
+	//printf("Thread ID %d Exiting, ",running->id);
+	//Print();
 	remList(running->id,&(running->parent->clist));
-	printf("Thread ID %d child list: ",running->parent->id);
-	c_print(running->parent->clist);
+	//printf("Thread ID %d child list: ",running->parent->id);
+	//c_print(running->parent->clist);
 	if(running->parent->allblock==1){//check for JoinAll
 		if(running->parent->clist==NULL)
 		{	printf("Finishing Join all for %d\n",running->parent->id);
@@ -240,7 +240,7 @@ void MyThreadExit(){
 		setcontext(&orig);
 	running=R_front->data;
 	Dequeue();
-	printf("Thread ID %d running(from Exit) \n",running->id);
+	//printf("Thread ID %d running(from Exit) \n",running->id);
 	setcontext(&running->context);
 }
 void MyThreadJoinAll()

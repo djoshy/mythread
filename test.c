@@ -18,62 +18,48 @@
 #include "libtest.h"
 
 
+#include <stdio.h>
 
-int n, m;
-int yield = 0;
-int join = 0;
+MySemaphore a;
 
-void t2(void * who)
+void t1(void * dummy)
 {
-  printf("t2 %d start\n", (int)who);
+  printf("t1 start\n");
   MyThreadExit();
 }
-
-void t1(void *);
-
-int makeThreads(char *me, void (*t)(void *), int many)
+void t2(void * dummy)
 {
-  MyThread T;
-  int i;
-  for (i = 0; i < many; i++) {
-    printf("%s create %d\n", me, i);
-    T = MyThreadCreate(t, (void *)i);
-    if (yield)
-      MyThreadYield();      
-  }
-  if (join)
-    MyThreadJoin(T);
-}
+  MySemaphoreWait(a);
+  printf("t2 start\n");
 
-void t1(void * who_)
-{
-  char me[16];
-  int who = (int)who_;
-  sprintf(me, "t1 %d", who);
-  printf("%s start\n", me);
-  makeThreads(me, t2, m);
-  printf("t1 %d end\n", who);
   MyThreadExit();
 }
 
 void t0(void * dummy)
 {
+  a= MySemaphoreInit(0);
   printf("t0 start\n");
-  makeThreads("t0", t1, n);
-  printf("t0 end\n");
+  MyThreadCreate (t2, NULL);
+  MyThreadCreate (t2, NULL);
+  
+  
+  //MyThread ptr=MyThreadCreate (t1, NULL);
+  //MyThreadCreate (t1, NULL);
+  MyThreadYield();
+  printf(" \n %d ",MySemaphoreDestroy(a));
+  MySemaphoreSignal(a);
+  MyThreadYield();
+  MySemaphoreSignal(a);
+  //printf(" \n %d ",MyThreadJoin(ptr));
+ // printf(" \n %d ",MySemaphoreDestroy(a));
+   
   MyThreadExit();
 }
 
-int main(int argc, char *argv[])
-{
-  if (argc != 5) {
-    return -1;
-  }
-  n = atoi(argv[1]);
-  m = atoi(argv[2]);
-  yield = atoi(argv[3]);
-  join = atoi(argv[4]);
 
+
+int main()
+{
   MyThreadInit(t0, NULL);
 }
 
