@@ -9,6 +9,8 @@ void t2(void * l)
   MySemaphoreWait(s);
   printf("Tracker is %d\n",a);
   MySemaphoreSignal(s);
+  MySemaphoreDestroy(s);
+  
   MyThreadExit();
 }
 void t1(void * who)
@@ -42,7 +44,6 @@ int main ()
   int count =2;
   MyThreadInit(t0, 0);
   //hmm(c);
-  MySemaphoreDestroy(s);
   printf("Exiting in main context, Bye :)\n");
   return 0;
 }
