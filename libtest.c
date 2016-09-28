@@ -213,7 +213,7 @@ int MyThreadJoin(MyThread thread){
 		//printf("Thread ID %d waiting for Thread ID %d\n",running->id,t->id);
 		running=R_front->data;
 		t->parent->block=t->id;
-		Print();
+		//Print();
 		Dequeue();
 		//printf("Thread ID %d running(from Join)\n",running->id);
 		swapcontext(&((t->parent)->context),&running->context);
@@ -231,7 +231,7 @@ void MyThreadExit(){
 	//c_print(running->parent->clist);
 	if(running->parent->allblock==1){//check for JoinAll
 		if(running->parent->clist==NULL)
-		{	printf("Finishing Join all for %d\n",running->parent->id);
+		{	//printf("Finishing Join all for %d\n",running->parent->id);
 			Enqueue(running->parent);running->parent->allblock=0;}
 	}
 	if(running->parent->block==running->id)//check for parent having Join on
