@@ -3,10 +3,8 @@
 #include<ucontext.h>
 #include "mythread.h"
 #define MEM 8000
-#define MAX_THREADS 250
 
-static int currentThread = -1;
-static int inThread = 0;
+
 static int numThread = 1;
 static ucontext_t orig;
 struct _MyThread{
