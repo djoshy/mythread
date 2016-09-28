@@ -2,7 +2,7 @@
 #include<stdlib.h>
 #include<ucontext.h>
 #include "mythread.h"
-#define MEM 8000
+#define MEM 10000
 
 
 static int numThread = 1;
