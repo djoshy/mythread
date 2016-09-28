@@ -15,7 +15,7 @@
  *  It is provided for illusration.  
  *
  *****************************************************************************/
-#include "libtest.h"
+#include "mythread.h"
 
 
 #include <stdio.h>

@@ -1,4 +1,4 @@
-#include "libtest.h"
+#include "mythread.h"
 #include<stdio.h>
 #include<stdlib.h>
 int a;
